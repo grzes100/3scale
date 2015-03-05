@@ -5,23 +5,55 @@
 import urllib2
 import json
 import sys
+import argparse
 
-servers_url = "http://servers-api.va.3sca.net/servers/"
-dc_url = "http://datacenters-api.va.3sca.net/datacenters/"
+# parse command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("proxy", help="proxy server",nargs="?")
+parser.add_argument("-u", "--http_user", help="HTTP user name")
+parser.add_argument("-p", "--http_passwd", help="HTTP password")
 
-resp = urllib2.urlopen(dc_url)
-DCs = json.loads(resp.read())
+args = parser.parse_args()
 
-resp = urllib2.urlopen(servers_url + ".json")
-servers = json.loads(resp.read())
+if args.proxy:
+    servers_url = "http://%s/servers/" % (args.proxy)
+    dc_url = "http://%s/datacenters/" % (args.proxy)
+
+    password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+    password_mgr.add_password(None, "http://"+args.proxy, args.http_user, args.http_passwd)
+    handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+    opener = urllib2.build_opener(handler)
+    urllib2.install_opener(opener)
+else:
+    servers_url = "http://servers-api.va.3sca.net/servers/"
+    dc_url = "http://datacenters-api.va.3sca.net/datacenters/"
+
+
+# retrieve datacenters
+try:
+    resp = urllib2.urlopen(dc_url)
+    DCs = json.loads(resp.read())
+except urllib2.URLError as e:
+    print "Error '%s' while trying to read %s" %(e.reason,dc_url)
+    sys.exit(1)
+
+
+# retrieve servers
+try:
+    resp = urllib2.urlopen(servers_url + ".json")
+    servers = json.loads(resp.read())
+except urllib2.URLError as e:
+    print "Error '%s' while trying to read %s" %(e.reason,servers_url)
+    sys.exit(2)
 
 if not (DCs and servers):
-    print "Error"
-    sys.exit(1)
+    print "Error. Exiting..."
+    sys.exit(10)
 
 # convert into a dictionary indexed by server ID
 servers = dict([(srv['id'], dict([(k, v) for k, v in srv.items() if k != "id"])) for srv in servers])
 
+# print the results
 for DC in DCs:
     print "- Datacenter:\t%s" % (DC['name'])
 
