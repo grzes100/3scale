@@ -1,0 +1,24 @@
+
+-- Using the Docker image:
+
+$ docker build -t proxy nginx/
+$ docker run -p 80:80 proxy
+
+
+-- Using the command line tool:
+
+$ python 3scale.py -h
+usage: 3scale.py [-h] [-u HTTP_USER] [-p HTTP_PASSWD] [proxy]
+
+positional arguments:
+  proxy                 proxy server
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u HTTP_USER, --http_user HTTP_USER
+                        HTTP user name
+  -p HTTP_PASSWD, --http_passwd HTTP_PASSWD
+                        HTTP password
+
+
+-- HTTP authentication (nginx/conf/htpasswd): user "3scale", password "3scale"
